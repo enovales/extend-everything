@@ -232,6 +232,48 @@ let ``timingRepository reports time even if the query fails`` () =
   Assert.True(succeeded)
 
 [<Fact>]
+let ``comparingRepository runs the 'same' effect when the results are equal`` () = 
+  let mutable ran1 = false
+  let mutable ran2 = false
+  let mutable ranSame = false
+  let r1 = fun _ -> async { ran1 <- true; return 1 }
+  let r2 = fun _ -> async { ran2 <- true; return 1 }
+
+  let r = 
+    comparingRepository(
+      r1,
+      r2,
+      (fun _ -> ranSame <- true),
+      (fun _ -> failwith "should not run")
+    )
+
+  Assert.Equal(1, Async.RunSynchronously(r(1)))
+  Assert.True(ran1)
+  Assert.True(ran2)
+  Assert.True(ranSame)
+
+[<Fact>]
+let ``comparingRepository runs the 'different' effect when the results are equal`` () = 
+  let mutable ran1 = false
+  let mutable ran2 = false
+  let mutable ranDifferent = false
+  let r1 = fun _ -> async { ran1 <- true; return 1 }
+  let r2 = fun _ -> async { ran2 <- true; return 2 }
+
+  let r = 
+    comparingRepository(
+      r1,
+      r2,
+      (fun _ -> failwith "should not run"),
+      (fun _ -> ranDifferent <- true)
+    )
+
+  Assert.Equal(1, Async.RunSynchronously(r(1)))
+  Assert.True(ran1)
+  Assert.True(ran2)
+  Assert.True(ranDifferent)
+
+[<Fact>]
 let ``delayed waits the specified amount before running the query`` () = 
   let mutable ran = false
   let r = 

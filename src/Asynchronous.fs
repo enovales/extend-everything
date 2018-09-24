@@ -145,6 +145,21 @@ module Asynchronous =
           reportTime(endTime - startTime) 
       }
 
+  (* A repository that compares the results of two implementations, and reports it via the supplied effects. *)
+  let comparingRepository(r1: AsyncRepository<'a, 'b>, r2: AsyncRepository<'a, 'b>, same: ('a * 'b) -> Unit, different: ('a * 'b * 'b) -> Unit) = 
+    fun aKey ->
+      async {
+        let! result1 = r1(aKey)
+        let! result2 = r2(aKey)
+
+        if (result1 = result2) then
+          same(aKey, result1)
+        else
+          different(aKey, result1, result2)
+
+        return result1
+      }
+
   (* A repository that generates a delay before running a query, using a provided function *)
   let delayed(r: AsyncRepository<'a, 'b>, delay: 'a -> TimeSpan) = 
     fun aKey -> async { 

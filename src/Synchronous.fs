@@ -105,6 +105,19 @@ module Synchronous =
         let endTime = getTime()
         reportTime(endTime - startTime)
 
+  (* A repository that compares the results of two implementations, and reports it via the supplied effects. *)
+  let comparingRepository(r1: Repository<'a, 'b>, r2: Repository<'a, 'b>, same: ('a * 'b) -> Unit, different: ('a * 'b * 'b) -> Unit) = 
+    fun aKey ->
+      let result1 = r1(aKey)
+      let result2 = r2(aKey)
+
+      if (result1 = result2) then
+        same(aKey, result1)
+      else
+        different(aKey, result1, result2)
+
+      result1
+
   (* A repository that falls back to another one, in the case of an exception *)
   let repositoryWithFallback(r: Repository<'a, 'b>, fb: Repository<'a, 'b>) = 
     fun aKey -> 
